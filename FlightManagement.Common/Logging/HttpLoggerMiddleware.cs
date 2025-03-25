@@ -18,37 +18,26 @@ namespace FlightManagement.Common.Logging
             _logger = logger;
         }
 
-        public async Task Invoke(HttpContext context)
+        public async Task InvokeAsync(HttpContext context)
         {
-            var stopwatch = Stopwatch.StartNew();
-            var requestBody = await ReadRequestBodyAsync(context.Request);
+            var requestId = Guid.NewGuid().ToString(); // Generate a unique identifier for this request
+            _logger.LogInformation("Incoming request {RequestId} at {UtcTime}: {Method} {Path}",
+                requestId, DateTime.UtcNow, context.Request.Method, context.Request.Path);
 
-            await _next(context); // Process request
+            var originalBodyStream = context.Response.Body;
+            using var responseBody = new MemoryStream();
+            context.Response.Body = responseBody;
 
-            stopwatch.Stop();
-            var responseStatusCode = context.Response.StatusCode;
+            await _next(context);
 
-            _logger.LogInformation(
-                "HTTP {Method} {Path} - Request: {RequestBody} - Response: {StatusCode} - Time: {ElapsedMs}ms",
-                context.Request.Method,
-                context.Request.Path,
-                requestBody,
-                responseStatusCode,
-                stopwatch.ElapsedMilliseconds
-            );
-        }
+            context.Response.Body.Seek(0, SeekOrigin.Begin);
+            var responseText = await new StreamReader(context.Response.Body).ReadToEndAsync();
+            context.Response.Body.Seek(0, SeekOrigin.Begin);
 
-        private async Task<string> ReadRequestBodyAsync(HttpRequest request)
-        {
-            if (request.ContentLength == null || request.ContentLength == 0)
-                return string.Empty;
+            _logger.LogInformation("Response for request {RequestId} at {UtcTime}: {StatusCode} - {Body}",
+                requestId, DateTime.UtcNow, context.Response.StatusCode, responseText);
 
-            request.Body.Position = 0; // Reset position
-            using var reader = new StreamReader(request.Body, Encoding.UTF8, leaveOpen: true);
-            var body = await reader.ReadToEndAsync();
-            request.Body.Position = 0; // Reset again for next middleware
-            return body;
+            await responseBody.CopyToAsync(originalBodyStream);
         }
     }
-
 }

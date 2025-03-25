@@ -5,9 +5,11 @@ using FlightManagement.Domain.Interfaces;
 using FlightManagement.Infrastructure.Persistence;
 using FlightManagement.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// Logging
+builder.Logging.AddConsole();
 // Load configuration 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
@@ -17,11 +19,6 @@ if (string.IsNullOrEmpty(connectionString))
 
 // Add services to DI
 builder.Services.AddControllers();
-builder.Services.AddLogging();
-builder.Services.AddHttpLogging(options =>
-{
-    options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
-});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -49,11 +46,12 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-    app.UseMiddleware<HttpLoggerMiddleware>(); // Custom middleware
-    app.UseHttpLogging(); // logging for headers, query params, etc.
 
     app.UseHttpsRedirection();
+    // Register the ApiLogger middleware
+    app.UseMiddleware<HttpLoggerMiddleware>();
     app.UseAuthorization();
+
     // Map Controllers (Ensure routes work)
     app.MapControllers();
 

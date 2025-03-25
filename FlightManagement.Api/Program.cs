@@ -1,4 +1,3 @@
-using FlightManagement.Common.Logging;
 using FlightManagement.Domain.Interfaces;
 using FlightManagement.Infrastructure.Persistence;
 using FlightManagement.Infrastructure.Repositories;
@@ -36,7 +35,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<HttpLoggerMiddleware>(); // Custom middleware
 app.UseHttpLogging(); // logging for headers, query params, etc.
 
 app.UseHttpsRedirection();

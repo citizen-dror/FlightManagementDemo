@@ -7,7 +7,7 @@ using FlightManagement.Domain.Entities;
 using FlightManagement.Common.DTOs;
 using FlightManagement.Domain.Interfaces;
 
-namespace FlightManagement.Tests.Services
+namespace FlightManagement.Tests.AlertService.Services
 {
     public class PriceAlertServiceTests
     {
@@ -20,7 +20,7 @@ namespace FlightManagement.Tests.Services
         {
             _priceAlertRepositoryMock = new Mock<IPriceAlertRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
-            
+
             // Setup AutoMapper
             var mapperConfig = new MapperConfiguration(cfg =>
             {
@@ -31,7 +31,7 @@ namespace FlightManagement.Tests.Services
             });
             _mapper = mapperConfig.CreateMapper();
 
-            _priceAlertService = new PriceAlertService(               
+            _priceAlertService = new PriceAlertService(
                 _priceAlertRepositoryMock.Object,
                 _userRepositoryMock.Object,
                 _mapper
@@ -67,7 +67,7 @@ namespace FlightManagement.Tests.Services
             // Arrange
             var alertDto = new PriceAlertDto { UserId = Guid.NewGuid(), Origin = "NYC", Destination = "LAX", TargetPrice = 300 };
 
-            _userRepositoryMock.Setup(repo => repo.GetByIdAsync(alertDto.UserId, false,false))
+            _userRepositoryMock.Setup(repo => repo.GetByIdAsync(alertDto.UserId, false, false))
                 .ReturnsAsync((User)null); // Simulate user not found
 
             // Act & Assert
