@@ -14,6 +14,6 @@ namespace FlightManagement.Domain.Interfaces
         Task<IEnumerable<PriceAlert>> GetActiveAlertsByUserIdAsync(Guid userId);  // Get active alerts for a user
         Task AddAsync(PriceAlert priceAlert);  // Add a new price alert
         Task UpdateAsync(PriceAlert priceAlert);  // Update an existing price alert
-        Task DeleteAsync(Guid alertId);  // Delete a price alert by its Id
+        Task<bool> DeleteAsync(Guid alertId);  // Delete a price alert by its Id
     }
 }

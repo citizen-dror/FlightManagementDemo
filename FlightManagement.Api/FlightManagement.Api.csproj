@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FlightManagement.AlertService\FlightManagement.AlertService.csproj" />
     <ProjectReference Include="..\FlightManagement.PriceAggregator\FlightManagement.PriceAggregator.csproj" />
     <ProjectReference Include="..\FlightManagement.NotificationService\FlightManagement.NotificationService.csproj" />
     <ProjectReference Include="..\FlightManagement.Common\FlightManagement.Common.csproj" />

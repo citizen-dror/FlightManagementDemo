@@ -1,4 +1,19 @@
+using FlightManagement.Domain.Interfaces;
+using FlightManagement.Infrastructure.Persistence;
+using FlightManagement.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// ?? Add Database Context
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ?? Register Services
+builder.Services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
+
+// ?? Add Controllers
+builder.Services.AddControllers();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -15,6 +30,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();  // Enable API routes
+
 
 var summaries = new[]
 {

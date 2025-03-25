@@ -46,14 +46,16 @@ namespace FlightManagement.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Guid alertId)
+        public async Task<bool> DeleteAsync(Guid alertId)
         {
             var priceAlert = await _context.PriceAlerts.FindAsync(alertId);
             if (priceAlert != null)
             {
                 _context.PriceAlerts.Remove(priceAlert);
                 await _context.SaveChangesAsync();
+                return true;
             }
+            return false;
         }
     }
 }

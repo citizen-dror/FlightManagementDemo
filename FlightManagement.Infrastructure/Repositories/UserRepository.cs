@@ -1,5 +1,6 @@
 ﻿using FlightManagement.Domain.Entities;
 using FlightManagement.Domain.Interfaces;
+using FlightManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,9 @@ namespace FlightManagement.Infrastructure.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly DbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public UserRepository(DbContext context)
+        public UserRepository(ApplicationDbContext context)
         {
             _context = context;
         }
