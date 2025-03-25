@@ -20,6 +20,17 @@ namespace FlightManagement.Infrastructure.Repositories
             return await _context.PriceAlerts.FindAsync(alertId);
         }
 
+        public async Task<IEnumerable<PriceAlert>> GetMatchingAlertsAsync(string origin, string destination, decimal price)
+        {
+            return await _context.PriceAlerts
+                .Where(a => a.Origin == origin
+                            && a.Destination == destination
+                            && a.TargetPrice >= price
+                            && a.IsActive
+                            && a.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<PriceAlert>> GetByUserIdAsync(Guid userId)
         {
             return await _context.PriceAlerts

@@ -10,12 +10,14 @@ namespace FlightManagement.AlertService
         private readonly IPriceAlertRepository _priceAlertRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<PriceAlertService> _logger;
 
-        public PriceAlertService(IPriceAlertRepository alertRepository, IUserRepository userRepository, IMapper mapper)
+        public PriceAlertService(IPriceAlertRepository alertRepository, IUserRepository userRepository, IMapper mapper, ILogger<PriceAlertService> logger)
         {
             _priceAlertRepository = alertRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<PriceAlertDto>> GetAlertsByUserIdAsync(Guid userId)
@@ -40,6 +42,28 @@ namespace FlightManagement.AlertService
         public async Task<bool> DeleteAlertAsync(Guid alertId)
         {
             return await _priceAlertRepository.DeleteAsync(alertId);
+        }
+
+        public async Task<int> CheckAlertsAsync(IEnumerable<FlightPriceDto> flightPrices)
+        {
+            int alertCount = 0;
+
+            foreach (var flight in flightPrices)
+            {
+                // Query matching alerts from the database with same origin, destination, and higher price
+                var matchingAlerts = await _priceAlertRepository.GetMatchingAlertsAsync(flight.DepartureAirport, flight.ArrivalAirport, flight.Price);
+
+                foreach (var alert in matchingAlerts)
+                {
+                    _logger.LogInformation($"Price alert triggered for User {alert.UserId}: Flight {flight.FlightNumber} ({flight.Airline}) from {flight.DepartureAirport} to {flight.ArrivalAirport} at {flight.Price} {flight.Currency}");
+
+                    alertCount++; // Increment count for each triggered alert
+
+                    // In the future, send this event to RabbitMQ
+                }
+            }
+            _logger.LogInformation($"Total price alerts triggered: {alertCount}");
+            return alertCount;
         }
     }
 }

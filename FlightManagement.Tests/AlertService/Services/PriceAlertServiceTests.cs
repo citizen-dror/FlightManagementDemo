@@ -6,6 +6,7 @@ using FlightManagement.AlertService;
 using FlightManagement.Domain.Entities;
 using FlightManagement.Common.DTOs;
 using FlightManagement.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace FlightManagement.Tests.AlertService.Services
 {
@@ -13,6 +14,7 @@ namespace FlightManagement.Tests.AlertService.Services
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<IPriceAlertRepository> _priceAlertRepositoryMock;
+        private readonly Mock<ILogger<PriceAlertService>> _loggerMock;
         private readonly IMapper _mapper;
         private readonly PriceAlertService _priceAlertService;
 
@@ -20,6 +22,7 @@ namespace FlightManagement.Tests.AlertService.Services
         {
             _priceAlertRepositoryMock = new Mock<IPriceAlertRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
+            _loggerMock = new Mock<ILogger<PriceAlertService>>();
 
             // Setup AutoMapper
             var mapperConfig = new MapperConfiguration(cfg =>
@@ -34,7 +37,8 @@ namespace FlightManagement.Tests.AlertService.Services
             _priceAlertService = new PriceAlertService(
                 _priceAlertRepositoryMock.Object,
                 _userRepositoryMock.Object,
-                _mapper
+                _mapper,
+                _loggerMock.Object
             );
         }
 
@@ -94,6 +98,74 @@ namespace FlightManagement.Tests.AlertService.Services
             result.Should().NotBeNull();
             result.Origin.Should().Be("NYC");
             result.Destination.Should().Be("LAX");
+        }
+
+        [Fact]
+        public async Task CheckAlertsAsync_WhenMatchingAlertsExist_ShouldReturnCorrectAlertCount()
+        {
+            // Arrange
+            var flightPrices = new List<FlightPriceDto>
+        {
+            new FlightPriceDto
+            {
+                FlightNumber = "BA456",
+                Airline = "British Airways",
+                DepartureAirport = "LHR",
+                ArrivalAirport = "JFK",
+                DepartureTime = DateTime.UtcNow,
+                ArrivalTime = DateTime.UtcNow.AddHours(7),
+                Price = 450.00m,
+                Currency = "USD"
+            }
+        };
+
+            var matchingAlerts = new List<PriceAlert>
+        {
+            new PriceAlert { UserId = Guid.NewGuid(), Origin = "LHR", Destination = "JFK", TargetPrice = 500.00m },
+            new PriceAlert { UserId = Guid.NewGuid(), Origin = "LHR", Destination = "JFK", TargetPrice = 480.00m }
+        };
+
+            _priceAlertRepositoryMock
+                .Setup(repo => repo.GetMatchingAlertsAsync("LHR", "JFK", 450.00m))
+                .ReturnsAsync(matchingAlerts);
+
+            // Act
+            int alertCount = await _priceAlertService.CheckAlertsAsync(flightPrices);
+
+            // Assert
+            Assert.Equal(2, alertCount);
+            _priceAlertRepositoryMock.Verify(repo => repo.GetMatchingAlertsAsync("LHR", "JFK", 450.00m), Times.Once);
+        }
+
+        [Fact]
+        public async Task CheckAlertsAsync_WhenNoMatchingAlertsExist_ShouldReturnZero()
+        {
+            // Arrange
+            var flightPrices = new List<FlightPriceDto>
+        {
+            new FlightPriceDto
+            {
+                FlightNumber = "BA456",
+                Airline = "British Airways",
+                DepartureAirport = "LHR",
+                ArrivalAirport = "JFK",
+                DepartureTime = DateTime.UtcNow,
+                ArrivalTime = DateTime.UtcNow.AddHours(7),
+                Price = 450.00m,
+                Currency = "USD"
+            }
+        };
+
+            _priceAlertRepositoryMock
+                .Setup(repo => repo.GetMatchingAlertsAsync("LHR", "JFK", 450.00m))
+                .ReturnsAsync(new List<PriceAlert>());
+
+            // Act
+            int alertCount = await _priceAlertService.CheckAlertsAsync(flightPrices);
+
+            // Assert
+            Assert.Equal(0, alertCount);
+            _priceAlertRepositoryMock.Verify(repo => repo.GetMatchingAlertsAsync("LHR", "JFK", 450.00m), Times.Once);
         }
     }
 }

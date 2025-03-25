@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FlightManagement.Common.DTOs
 {
-    public class FlightDto
+    public class FlightPriceDto
     {
         public Guid Id { get; set; }
         public string FlightNumber { get; set; } = string.Empty;

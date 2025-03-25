@@ -10,6 +10,7 @@ namespace FlightManagement.Domain.Interfaces
     public interface IPriceAlertRepository
     {
         Task<PriceAlert> GetByIdAsync(Guid alertId);  // Get a price alert by its Id
+        Task<IEnumerable<PriceAlert>> GetMatchingAlertsAsync(string origin, string destination, decimal price); // Get MatchingAlerts by origin, destination and higher price
         Task<IEnumerable<PriceAlert>> GetByUserIdAsync(Guid userId);  // Get all price alerts for a user
         Task<IEnumerable<PriceAlert>> GetActiveAlertsByUserIdAsync(Guid userId);  // Get active alerts for a user
         Task AddAsync(PriceAlert priceAlert);  // Add a new price alert

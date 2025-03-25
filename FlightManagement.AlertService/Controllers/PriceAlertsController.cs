@@ -47,5 +47,17 @@ namespace FlightManagement.AlertService.Controllers
 
             return NoContent();
         }
+
+        // POST: api/alerts/check-alerts
+        [HttpPost("check-alerts")]
+        public async Task<IActionResult> CheckAlerts([FromBody] IEnumerable<FlightPriceDto> flightPrices)
+        {
+            if (flightPrices == null || !flightPrices.Any())
+            {
+                return BadRequest("Flight prices list cannot be empty.");
+            }
+            int alertCount = await _priceAlertService.CheckAlertsAsync(flightPrices);
+            return Ok(new { Message = "Price alerts checked successfully.", AlertCount = alertCount });
+        }
     }
 }

@@ -7,5 +7,6 @@ namespace FlightManagement.Domain.Interfaces
         Task<IEnumerable<PriceAlertDto>> GetAlertsByUserIdAsync(Guid userId);
         Task<PriceAlertDto> CreateAlertAsync(PriceAlertDto alertDto);
         Task<bool> DeleteAlertAsync(Guid alertId);
+        Task<int> CheckAlertsAsync(IEnumerable<FlightPriceDto> flightPrices);
     }
 }
