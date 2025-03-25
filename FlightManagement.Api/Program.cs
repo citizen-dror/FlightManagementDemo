@@ -1,3 +1,4 @@
+using FlightManagement.Common.Logging;
 using FlightManagement.Domain.Interfaces;
 using FlightManagement.Infrastructure.Persistence;
 using FlightManagement.Infrastructure.Repositories;
@@ -12,8 +13,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ?? Register Services
 builder.Services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
 
-// ?? Add Controllers
+// Add Controllers
 builder.Services.AddControllers();
+builder.Services.AddLogging();
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+});
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -28,6 +35,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<HttpLoggerMiddleware>(); // Custom middleware
+app.UseHttpLogging(); // logging for headers, query params, etc.
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

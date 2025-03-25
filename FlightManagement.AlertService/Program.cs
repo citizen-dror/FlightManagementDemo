@@ -1,5 +1,6 @@
 using FlightManagement.AlertService;
 using FlightManagement.AlertService.Mappings;
+using FlightManagement.Common.Logging;
 using FlightManagement.Domain.Interfaces;
 using FlightManagement.Infrastructure.Persistence;
 using FlightManagement.Infrastructure.Repositories;
@@ -16,6 +17,11 @@ if (string.IsNullOrEmpty(connectionString))
 
 // Add services to DI
 builder.Services.AddControllers();
+builder.Services.AddLogging();
+builder.Services.AddHttpLogging(options =>
+{
+    options.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -43,10 +49,11 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
+    app.UseMiddleware<HttpLoggerMiddleware>(); // Custom middleware
+    app.UseHttpLogging(); // logging for headers, query params, etc.
 
     app.UseHttpsRedirection();
     app.UseAuthorization();
-
     // Map Controllers (Ensure routes work)
     app.MapControllers();
 
