@@ -59,7 +59,7 @@ this is the future architecture
 
 flight_price_demo-data_flow.mermaid
 this is the currenct data flow 
-דקק
+
 
 ## How to Install and Run the Project
 
