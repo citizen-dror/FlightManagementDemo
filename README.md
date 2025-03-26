@@ -51,6 +51,15 @@ FlightManagementSystem.sln
 | **Notification Service** | Windows Service / Kubernetes Job | Needs event-driven processing          |
 | **Database**         | SQL Server (on RDS/Azure SQL)  | Centralized storage                      |
 
+## Architecture Diagram, Data Flow 
+see: 
+
+flight_price_demo-architecture_future.mermaid
+this is the future architecture
+
+flight_price_demo-data_flow.mermaid
+this is the currenct data flow 
+דקק
 
 ## How to Install and Run the Project
 
