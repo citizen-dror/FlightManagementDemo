@@ -1,0 +1,19 @@
+graph TD
+    subgraph Frontend
+        A[User] -->|Creates Alert| B[Web/Mobile App]
+        B -->|Sends Request| C[API Gateway]
+    end
+
+    subgraph Backend
+        C -->|Routes Request| D[Alert Management Service]
+        D -->|Stores Alerts| E[Database]
+        E -->|Fetch Alerts| D
+
+        F[Flight Price Aggregator] -->|Fetches Prices| G[Airline APIs]
+        G -->|Returns Prices| F
+        F -->|Checks Alerts| D
+        D -->|Match Found| H[Message Broker]
+        H -->|Triggers Event| I[Notification Service]
+        I -->|Sends Notifications| J[Push Notification System]
+        J -->|Notifies User| A
+    end

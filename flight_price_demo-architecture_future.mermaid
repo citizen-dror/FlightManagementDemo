@@ -1,0 +1,62 @@
+flowchart TD
+    subgraph "External Data Sources"
+        AirlineAPIs[Airline APIs]
+        PriceCompSites[Price Comparison Sites]
+    end
+    
+    subgraph "Data Ingestion Layer"
+        APIGateway[API Gateway]
+        PriceIngestionService[Price Ingestion Service]
+        EventBus[Event Bus]
+    end
+    
+    subgraph "Processing Layer"
+        PriceAlertProcessor[Price Alert Processor]
+        AlertMatchingService[Alert Matching Service]
+    end
+    
+    subgraph "Alert Management Layer"
+        AlertAPI[Alert Management API]
+        UserService[User Service]
+        AlertService[Alert Service]
+    end
+    
+    subgraph "Notification Layer"
+        NotificationService[Notification Service]
+        PushNotificationProvider[Push Notification Provider]
+    end
+    
+    subgraph "Data Storage"
+        UserDB[(User Database)]
+        AlertsDB[(Alerts Database)]
+        PriceHistoryDB[(Price History)]
+        NotificationDB[(Notification History)]
+    end
+    
+    subgraph "Client Applications"
+        MobileApp[Mobile App]
+        WebApp[Web App]
+    end
+    
+    AirlineAPIs --> APIGateway
+    PriceCompSites --> APIGateway
+    APIGateway --> PriceIngestionService
+    PriceIngestionService --> EventBus
+    PriceIngestionService --> PriceHistoryDB
+    
+    EventBus --> PriceAlertProcessor
+    PriceAlertProcessor --> AlertMatchingService
+    AlertMatchingService --> AlertsDB
+    AlertMatchingService --> UserDB
+    AlertMatchingService --> NotificationService
+    
+    NotificationService --> NotificationDB
+    NotificationService --> PushNotificationProvider
+    PushNotificationProvider --> MobileApp
+    
+    MobileApp --> AlertAPI
+    WebApp --> AlertAPI
+    AlertAPI --> UserService
+    AlertAPI --> AlertService
+    UserService --> UserDB
+    AlertService --> AlertsDB

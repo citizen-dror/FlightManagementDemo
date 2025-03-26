@@ -1,0 +1,19 @@
+---curl rquests ----
+
+---get the price alerts of user , change the user by guid from the DB 
+curl --request GET --url https://localhost:7075/api/alerts/user/BF0F4E9A-4A46-4B0D-8837-88E5DFED8AE1
+
+--create price alert for a user , change the user by id guid from the DB 
+curl --request POST --url https://localhost:7075/api/alerts/ --header 'content-type: application/json' --data '{"userId": "BF0F4E9A-4A46-4B0D-8837-88E5DFED8AE1", "origin": "TLV", "destination": "JFK", "targetPrice": 450.00, "currency": "USD", "isFlexibleDate": false,"oneWay": false, "isActive": true, "expiresAt": "2025-05-01T23:59:59.0000000Z"}'
+win 
+curl --request POST --url https://localhost:7075/api/alerts/ --header "content-type: application/json" --data "{\"userId\": \"BF0F4E9A-4A46-4B0D-8837-88E5DFED8AE1\", \"origin\": \"TLV\", \"destination\": \"JFK\", \"targetPrice\": 450.00, \"currency\": \"USD\", \"isFlexibleDate\": false, \"oneWay\": false, \"isActive\": true, \"expiresAt\": \"2025-05-01T23:59:59.0000000Z\"}"
+
+
+--delete price alert 
+curl --request DELETE --url https://localhost:7075/api/alerts/1910ccac-3689-4e9b-b5b3-76c61464b1ce --header 'content-type: application/json'
+
+--check alerts 
+curl --request POST --url https://localhost:7075/api/alerts/check-alerts --header 'content-type: application/json' --data '[{"id": "a1b2c3d4-e5f6-7890-abcd-1234567890ef", "flightNumber": "LY001", "airline": "El Al", "departureAirport": "TLV", "arrivalAirport": "JFK","departureTime": "2025-04-15T08:00:00", "arrivalTime": "2025-04-15T14:00:00", "price": 400.00, "currency": "USD"}]'
+win 
+curl --request POST --url https://localhost:7075/api/alerts/check-alerts --header "content-type: application/json" --data "[{\"id\": \"a1b2c3d4-e5f6-7890-abcd-1234567890ef\", \"flightNumber\": \"LY001\", \"airline\": \"El Al\", \"departureAirport\": \"TLV\", \"arrivalAirport\": \"JFK\", \"departureTime\": \"2025-04-15T08:00:00\", \"arrivalTime\": \"2025-04-15T14:00:00\", \"price\": 400.00, \"currency\": \"USD\"}]"
+

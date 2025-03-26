@@ -1,0 +1,17 @@
+
+
+---inseert filght to db ---
+INSERT INTO flights (id, FlightNumber, Airline, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, Price, Currency)
+VALUES 
+(NEWID(), 'AA123', 'American Airlines', 'JFK', 'LAX', '2025-04-01 08:00:00', '2025-04-01 11:00:00', 350, 'USD'),
+(NEWID(), 'BA456', 'British Airways', 'LHR', 'JFK', '2025-04-02 14:30:00', '2025-04-02 17:30:00', 500, 'USD');
+
+---insert useers 
+
+INSERT INTO [FlightsDemo].[dbo].[Users] (Id, Email, Username, DeviceToken, MobileOS)
+VALUES 
+(NEWID(), 'user1@example.com', 'user1', 'token123', 'iOS'),
+(NEWID(), 'user2@example.com', 'user2', 'token456', 'Android');
+
+
+
