@@ -39,4 +39,43 @@ FlightManagementSystem.sln
 - **API Gateway** – Routes requests (runs on IIS or Kestrel with Load Balancer). (future)
 - **Alert Service** – Manages CRUD operations for alerts (runs on IIS). (done)
 - **Price Aggregator** – Calls airline APIs & processes prices (runs as a Windows Service or Background Worker). (future)
-- **Notification Service** – Sends push notifications (runs as a Windows Service or on Kubernetes as a Background Job). (future)
+- **Notification Service** – Sends push notifications (runs as a Windows Service or on Kubernetes as a Background Job). (future)|
+
+# Service Deployment (IIS vs. Windows Service)
+
+| Service               | Runs on                          | Why?                                      |
+|-----------------------|--------------------------------|-------------------------------------------|
+| **API Gateway**       | IIS / Load Balancer            | Handles external traffic & security      |
+| **Alert Service**     | IIS                            | CRUD operations, scalable as API         |
+| **Price Aggregator**  | Windows Service / Kubernetes Job | Polls external APIs periodically        |
+| **Notification Service** | Windows Service / Kubernetes Job | Needs event-driven processing          |
+| **Database**         | SQL Server (on RDS/Azure SQL)  | Centralized storage                      |
+
+
+## How to Install and Run the Project
+
+1. **Create the Database and Login**
+   - Run the script: `init-create_db_and_login.sql`
+
+2. **Create the Schema**
+   - Run the migration script see : `init-run_migration_db_sql.txt`
+
+3. **Insert Initial Values into the Database (e.g., Users)**
+   - Run the script: `init-insert_db_values.sql`
+
+4. **Initialize RabbitMQ using Docker**
+   - Follow the instructions in `init-rabbit.txt` to set up RabbitMQ.
+
+5. **Run the Server**
+   - Start the backend server to launch the application.
+
+6. **Use Curl to Add Price Alerts**
+   - Execute the appropriate `curl` commands to add price alerts.
+   - See curl_requets.txt
+
+7. **Verify RabbitMQ Info**
+   1. Run the server if it is not running.
+   2. Use `curl` to send a POST request to check alerts.
+   3. If a new price is lower than the existing price alert for the same origin and destination, you should see a new events in the `FlightsNotificationQueue` in RabbitMQ
+
+
