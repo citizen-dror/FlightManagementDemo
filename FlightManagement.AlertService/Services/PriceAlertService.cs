@@ -2,6 +2,10 @@
 using FlightManagement.Domain.Interfaces;
 using FlightManagement.Common.DTOs;
 using AutoMapper;
+using FlightManagement.Infrastructure.RabbitMQ;
+using RabbitMQ.Client;
+using Microsoft.AspNetCore.Connections;
+using Newtonsoft.Json;
 
 namespace FlightManagement.AlertService
 {
@@ -10,13 +14,21 @@ namespace FlightManagement.AlertService
         private readonly IPriceAlertRepository _priceAlertRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly RabbitConnectionFactory _connectionFactory;
+        private readonly RabbitSender _sender;
         private readonly ILogger<PriceAlertService> _logger;
 
-        public PriceAlertService(IPriceAlertRepository alertRepository, IUserRepository userRepository, IMapper mapper, ILogger<PriceAlertService> logger)
+        public PriceAlertService(IPriceAlertRepository alertRepository, 
+            IUserRepository userRepository, IMapper mapper,
+            RabbitConnectionFactory connectionFactory,
+            RabbitSender sender,
+            ILogger<PriceAlertService> logger)
         {
             _priceAlertRepository = alertRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _connectionFactory = connectionFactory;
+            _sender = sender;
             _logger = logger;
         }
 
@@ -47,19 +59,44 @@ namespace FlightManagement.AlertService
         public async Task<int> CheckAlertsAsync(IEnumerable<FlightPriceDto> flightPrices)
         {
             int alertCount = 0;
+            // Initialize logger 
+            //var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<RabbitSender>();
 
-            foreach (var flight in flightPrices)
+            // Open connection and channel outside the loop to avoid repetitive creation
+            using (var connection = await _connectionFactory.CreateConnectionAsync())
+            using (var channel = await connection.CreateChannelAsync())
             {
-                // Query matching alerts from the database with same origin, destination, and higher price
-                var matchingAlerts = await _priceAlertRepository.GetMatchingAlertsAsync(flight.DepartureAirport, flight.ArrivalAirport, flight.Price);
-
-                foreach (var alert in matchingAlerts)
+                foreach (var flight in flightPrices)
                 {
-                    _logger.LogInformation($"Price alert triggered for User {alert.UserId}: Flight {flight.FlightNumber} ({flight.Airline}) from {flight.DepartureAirport} to {flight.ArrivalAirport} at {flight.Price} {flight.Currency}");
+                    // Query matching alerts from the database with the same origin, destination, and higher price
+                    var matchingAlerts = await _priceAlertRepository.GetMatchingAlertsAsync(flight.DepartureAirport, flight.ArrivalAirport, flight.Price);
 
-                    alertCount++; // Increment count for each triggered alert
+                    foreach (var alert in matchingAlerts)
+                    {
+                        _logger.LogInformation($"Price alert triggered for User {alert.UserId}: Flight {flight.FlightNumber} ({flight.Airline}) from {flight.DepartureAirport} to {flight.ArrivalAirport} at {flight.Price} {flight.Currency}");
+                        alertCount++; // Increment count for each triggered alert
 
-                    // In the future, send this event to RabbitMQ
+                        // Create message with flight and alert details in JSON format
+                        var message = new
+                        {
+                            AlertType = "Price Alert",
+                            FlightNumber = flight.FlightNumber,
+                            Airline = flight.Airline,
+                            DepartureAirport = flight.DepartureAirport,
+                            ArrivalAirport = flight.ArrivalAirport,
+                            Price = flight.Price,
+                            Currency = flight.Currency,
+                            UserId = alert.UserId,
+                            AlertPrice = alert.TargetPrice,
+                            TriggeredAt = DateTime.UtcNow
+                        };
+
+                        // Convert the message to JSON format
+                        var jsonMessage = JsonConvert.SerializeObject(message);
+
+                        // Send the message to RabbitMQ
+                        await _sender.SendMessageAsync("FlightsNotificationQueue", jsonMessage);
+                    }
                 }
             }
             _logger.LogInformation($"Total price alerts triggered: {alertCount}");

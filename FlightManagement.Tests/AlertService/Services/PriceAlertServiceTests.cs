@@ -7,6 +7,7 @@ using FlightManagement.Domain.Entities;
 using FlightManagement.Common.DTOs;
 using FlightManagement.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
+using FlightManagement.Infrastructure.RabbitMQ;
 
 namespace FlightManagement.Tests.AlertService.Services
 {
@@ -15,6 +16,8 @@ namespace FlightManagement.Tests.AlertService.Services
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<IPriceAlertRepository> _priceAlertRepositoryMock;
         private readonly Mock<ILogger<PriceAlertService>> _loggerMock;
+        private readonly Mock<RabbitConnectionFactory> _connectionFactoryMock;
+        private readonly Mock<RabbitSender> _senderMock;
         private readonly IMapper _mapper;
         private readonly PriceAlertService _priceAlertService;
 
@@ -23,6 +26,8 @@ namespace FlightManagement.Tests.AlertService.Services
             _priceAlertRepositoryMock = new Mock<IPriceAlertRepository>();
             _userRepositoryMock = new Mock<IUserRepository>();
             _loggerMock = new Mock<ILogger<PriceAlertService>>();
+            _connectionFactoryMock = new Mock<RabbitConnectionFactory>();
+            _senderMock = new Mock<RabbitSender>();
 
             // Setup AutoMapper
             var mapperConfig = new MapperConfiguration(cfg =>
@@ -38,6 +43,8 @@ namespace FlightManagement.Tests.AlertService.Services
                 _priceAlertRepositoryMock.Object,
                 _userRepositoryMock.Object,
                 _mapper,
+                _connectionFactoryMock.Object,
+                _senderMock.Object,
                 _loggerMock.Object
             );
         }

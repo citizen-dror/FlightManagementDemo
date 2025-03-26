@@ -1,59 +1,32 @@
 using FlightManagement.AlertService;
 using FlightManagement.AlertService.Mappings;
+using FlightManagement.Common.Configs;
 using FlightManagement.Common.Logging;
 using FlightManagement.Domain.Interfaces;
 using FlightManagement.Infrastructure.Persistence;
+using FlightManagement.Infrastructure.RabbitMQ;
 using FlightManagement.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
-// Logging
-builder.Logging.AddConsole();
-// Load configuration 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new InvalidOperationException("Database connection string is missing.");
-}
 
-// Add services to DI
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configure Logging
+ConfigureLogging(builder);
 
-// Add Database Context (Ensure it's before repositories)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// Load Configuration
+var connectionString = GetConnectionString(builder);
+var rabbitMqConfig = ConfigureRabbitMQ(builder);
 
-// Register repositories
-builder.Services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+// Register Services
+ConfigureServices(builder.Services, connectionString, rabbitMqConfig);
 
-// Register AutoMapper
-builder.Services.AddAutoMapper(typeof(PriceAlertProfile));
-
-// Register services
-builder.Services.AddScoped<IPriceAlertService, PriceAlertService>();
+var app = builder.Build();
 
 try
 {
-    var app = builder.Build();
-
-    // Configure middleware
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
-
-    app.UseHttpsRedirection();
-    // Register the ApiLogger middleware
-    app.UseMiddleware<HttpLoggerMiddleware>();
-    app.UseAuthorization();
-
-    // Map Controllers (Ensure routes work)
-    app.MapControllers();
+    // Configure Middleware
+    ConfigureMiddleware(app);
 
     app.Run();
 }
@@ -63,3 +36,73 @@ catch (Exception ex)
     if (ex.InnerException != null)
         Console.WriteLine($"Inner exception: {ex.InnerException}");
 }
+
+#region Helper Functions
+
+void ConfigureLogging(WebApplicationBuilder builder)
+{
+    builder.Logging.AddConsole();
+}
+
+string GetConnectionString(WebApplicationBuilder builder)
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("Database connection string is missing.");
+    }
+    return connectionString;
+}
+
+RabbitMQConfig ConfigureRabbitMQ(WebApplicationBuilder builder)
+{
+    var config = builder.Configuration.GetSection("RabbitMQ").Get<RabbitMQConfig>();
+    if (config == null)
+    {
+        throw new InvalidOperationException("RabbitMQ configuration is missing.");
+    }
+    return config;
+}
+
+void ConfigureServices(IServiceCollection services, string connectionString, RabbitMQConfig rabbitMqConfig)
+{
+    // Add controllers
+    services.AddControllers();
+    services.AddEndpointsApiExplorer();
+    services.AddSwaggerGen();
+
+    // Add Database Context
+    services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+
+    // Register repositories
+    services.AddScoped<IPriceAlertRepository, PriceAlertRepository>();
+    services.AddScoped<IUserRepository, UserRepository>();
+
+    // Register AutoMapper
+    services.AddAutoMapper(typeof(PriceAlertProfile));
+
+    // Register services
+    services.AddScoped<IPriceAlertService, PriceAlertService>();
+
+    // Register RabbitMQ dependencies
+    services.AddSingleton(rabbitMqConfig); // Register RabbitMQConfig as a singleton
+    services.AddSingleton<RabbitConnectionFactory>(); // Register RabbitConnectionFactory as a singleton
+    services.AddScoped<RabbitSender>(); // Register RabbitSender as a scoped dependency
+}
+
+void ConfigureMiddleware(WebApplication app)
+{
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+    app.UseMiddleware<HttpLoggerMiddleware>();
+    app.UseAuthorization();
+    app.MapControllers();
+}
+
+#endregion
